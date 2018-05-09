@@ -1,0 +1,9 @@
+language: go
+sudo: false
+go_import_path: github.com/go-session/gin-session
+go:
+  - 1.9
+before_install:
+  - go get github.com/mattn/goveralls
+script:
+  - $HOME/gopath/bin/goveralls -service=travis-ci
