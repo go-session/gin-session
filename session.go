@@ -13,13 +13,20 @@ var (
 	DefaultKey      = "github.com/go-session/gin-session"
 	once            sync.Once
 	internalManager *session.Manager
-	internalError   = func(ctx *gin.Context, err error) {
-		ctx.AbortWithError(500, err)
-	}
+	internalError   ErrorHandleFunc
 )
 
+func init() {
+	internalError = func(ctx *gin.Context, err error) {
+		ctx.AbortWithError(500, err)
+	}
+}
+
+// ErrorHandleFunc error handling function
+type ErrorHandleFunc func(ctx *gin.Context, err error)
+
 // SetErrorHandler Set error handling
-func SetErrorHandler(handler func(ctx *gin.Context, err error)) {
+func SetErrorHandler(handler ErrorHandleFunc) {
 	internalError = handler
 }
 
