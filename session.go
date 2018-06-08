@@ -8,27 +8,31 @@ import (
 	"gopkg.in/session.v2"
 )
 
-var (
-	// DefaultKey Keys stored in the context
-	DefaultKey      = "github.com/go-session/gin-session"
-	once            sync.Once
-	internalManager *session.Manager
-	internalError   ErrorHandleFunc
+type (
+	// ErrorHandleFunc error handling function
+	ErrorHandleFunc func(*gin.Context, error)
+	// Config defines the config for Session middleware
+	Config struct {
+		// error handling when starting the session
+		ErrorHandleFunc ErrorHandleFunc
+		// keys stored in the context
+		StoreKey string
+	}
 )
 
-func init() {
-	internalError = func(ctx *gin.Context, err error) {
-		ctx.AbortWithError(500, err)
+var (
+	once            sync.Once
+	internalManager *session.Manager
+	storeKey        string
+
+	// DefaultConfig is the default Recover middleware config.
+	DefaultConfig = Config{
+		ErrorHandleFunc: func(ctx *gin.Context, err error) {
+			ctx.AbortWithError(500, err)
+		},
+		StoreKey: "github.com/go-session/gin-session",
 	}
-}
-
-// ErrorHandleFunc error handling function
-type ErrorHandleFunc func(ctx *gin.Context, err error)
-
-// SetErrorHandler Set error handling
-func SetErrorHandler(handler ErrorHandleFunc) {
-	internalError = handler
-}
+)
 
 func manager(opt ...session.Option) *session.Manager {
 	once.Do(func() {
@@ -37,22 +41,36 @@ func manager(opt ...session.Option) *session.Manager {
 	return internalManager
 }
 
-// New Create a session middleware
+// New create a session middleware
 func New(opt ...session.Option) gin.HandlerFunc {
+	return NewWithConfig(DefaultConfig, opt...)
+}
+
+// NewWithConfig create a session middleware
+func NewWithConfig(config Config, opt ...session.Option) gin.HandlerFunc {
+	if config.ErrorHandleFunc == nil {
+		config.ErrorHandleFunc = DefaultConfig.ErrorHandleFunc
+	}
+
+	storeKey = config.StoreKey
+	if storeKey == "" {
+		storeKey = DefaultConfig.StoreKey
+	}
+
 	return func(ctx *gin.Context) {
 		store, err := manager(opt...).Start(context.Background(), ctx.Writer, ctx.Request)
 		if err != nil {
-			internalError(ctx, err)
+			config.ErrorHandleFunc(ctx, err)
 			return
 		}
-		ctx.Set(DefaultKey, store)
+		ctx.Set(storeKey, store)
 		ctx.Next()
 	}
 }
 
 // FromContext Get session storage from context
 func FromContext(ctx *gin.Context) session.Store {
-	return ctx.MustGet(DefaultKey).(session.Store)
+	return ctx.MustGet(storeKey).(session.Store)
 }
 
 // Destroy a session
