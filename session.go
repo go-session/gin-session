@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"github.com/gin-gonic/gin"
-	"gopkg.in/session.v2"
+	"github.com/go-session/session"
 )
 
 type (

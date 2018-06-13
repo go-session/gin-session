@@ -20,16 +20,13 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-session/gin-session"
-	"gopkg.in/session.v2"
+	"github.com/go-session/session"
 )
 
 func main() {
 	app := gin.Default()
 
-	app.Use(ginsession.New(
-		session.SetCookieName("session_id"),
-		session.SetSign([]byte("sign")),
-	))
+	app.Use(ginsession.New())
 
 	app.GET("/", func(ctx *gin.Context) {
 		store := ginsession.FromContext(ctx)
