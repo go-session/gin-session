@@ -20,7 +20,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-session/gin-session"
-	"github.com/go-session/session"
 )
 
 func main() {
