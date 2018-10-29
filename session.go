@@ -18,8 +18,9 @@ type (
 		StoreKey string
 		// keys stored in the context
 		ManageKey string
-		// filter this request to use the session
-		FilterFunc func(*gin.Context) bool
+		// defines a function to skip middleware.Returning true skips processing
+		// the middleware.
+		Skipper func(*gin.Context) bool
 	}
 )
 
@@ -34,8 +35,8 @@ var (
 		},
 		StoreKey:  "github.com/go-session/gin-session/store",
 		ManageKey: "github.com/go-session/gin-session/manage",
-		FilterFunc: func(ctx *gin.Context) bool {
-			return true
+		Skipper: func(_ *gin.Context) bool {
+			return false
 		},
 	}
 )
@@ -63,15 +64,18 @@ func NewWithConfig(config Config, opt ...session.Option) gin.HandlerFunc {
 
 	manage := session.NewManager(opt...)
 	return func(ctx *gin.Context) {
-		if config.FilterFunc(ctx) {
-			ctx.Set(manageKey, manage)
-			store, err := manage.Start(context.Background(), ctx.Writer, ctx.Request)
-			if err != nil {
-				config.ErrorHandleFunc(ctx, err)
-				return
-			}
-			ctx.Set(storeKey, store)
+		if config.Skipper(ctx) {
+			ctx.Next()
+			return
 		}
+
+		ctx.Set(manageKey, manage)
+		store, err := manage.Start(context.Background(), ctx.Writer, ctx.Request)
+		if err != nil {
+			config.ErrorHandleFunc(ctx, err)
+			return
+		}
+		ctx.Set(storeKey, store)
 		ctx.Next()
 	}
 }
