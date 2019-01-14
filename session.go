@@ -2,6 +2,7 @@ package ginsession
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-session/session"
@@ -82,15 +83,27 @@ func NewWithConfig(config Config, opt ...session.Option) gin.HandlerFunc {
 
 // FromContext Get session storage from context
 func FromContext(ctx *gin.Context) session.Store {
-	return ctx.MustGet(storeKey).(session.Store)
+	v, ok := ctx.Get(storeKey)
+	if ok {
+		return v.(session.Store)
+	}
+	return nil
 }
 
 // Destroy a session
 func Destroy(ctx *gin.Context) error {
-	return ctx.MustGet(manageKey).(*session.Manager).Destroy(context.Background(), ctx.Writer, ctx.Request)
+	v, ok := ctx.Get(manageKey)
+	if !ok {
+		return fmt.Errorf("invalid session manager")
+	}
+	return v.(*session.Manager).Destroy(nil, ctx.Writer, ctx.Request)
 }
 
 // Refresh a session and return to session storage
 func Refresh(ctx *gin.Context) (session.Store, error) {
-	return ctx.MustGet(manageKey).(*session.Manager).Refresh(context.Background(), ctx.Writer, ctx.Request)
+	v, ok := ctx.Get(manageKey)
+	if !ok {
+		return nil, fmt.Errorf("invalid session manager")
+	}
+	return v.(*session.Manager).Refresh(nil, ctx.Writer, ctx.Request)
 }
