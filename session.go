@@ -65,7 +65,7 @@ func NewWithConfig(config Config, opt ...session.Option) gin.HandlerFunc {
 
 	manage := session.NewManager(opt...)
 	return func(ctx *gin.Context) {
-		if config.Skipper(ctx) {
+		if config.Skipper != nil && config.Skipper(ctx) {
 			ctx.Next()
 			return
 		}
