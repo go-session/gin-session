@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-session/session"
+	"github.com/go-session/session/v3"
 )
 
 func TestSession(t *testing.T) {
