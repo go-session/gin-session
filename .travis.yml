@@ -2,7 +2,7 @@ language: go
 sudo: false
 go_import_path: github.com/go-session/gin-session
 go:
-  - 1.9
+  - "1.19"
 before_install:
   - go get -t -v ./...
 
